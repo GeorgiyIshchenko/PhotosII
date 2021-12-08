@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {{ photo.tag.name|title }}
+{% endblock %}
+
+{% block body %}
+
+    {% include "navbar.html" %}
+
+    <div class="container" style = "padding: 30px 0;">
+        <h1>{{ photo.tag.name|title }} <a href="{{ photo.image.url }}"><span class="badge bg-secondary">Просмотр</span></a></h1>
+        <div class="row mt-5">
+            <div class="col-6">
+
+                <img src="{{ photo.image.url }}" alt="{{ photo.tag }}" style="width:100%;"/>
+            </div>
+            <div class="col-6">
+                <p class="fs-3">Описание: {{ photo.description|title }}</p>
+                {% if photo.is_good %}
+                    <h2><span class="badge bg-success">{{ photo.get_status_display }}</span></h2>
+                {% else %}
+                    <h2><span class="badge bg-danger">{{ photo.get_status_display }}</span></h2>
+                {% endif %}
+                <p class="fs-3">Тэг: {{ photo.tag|title }}</p>
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}
