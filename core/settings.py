@@ -26,12 +26,12 @@ SECRET_KEY = 'gov7socr(3d$&w35$cnl2qwf*#1g))93lsp%$0q0!0lh@rb-*t'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.0.106', '*']
 
 
 # Application definition
 
-SITE_ID = 2
+SITE_ID = 3
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -42,8 +42,18 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'bootstrap4',
+    'account',
+    'rest_framework',
     'photosii',
 ]
+
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ]
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -53,6 +63,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+MIDDLEWARE_CLASSES = [
+    "account.middleware.LocaleMiddleware",
+    "account.middleware.TimezoneMiddleware",
+    "account.middleware.ExpiredPasswordMiddleware",
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -73,7 +89,16 @@ TEMPLATES = [
     },
 ]
 
+TEMPLATE_CONTEXT_PROCESSORS = [
+    "account.context_processors.account",
+]
+
 WSGI_APPLICATION = 'core.wsgi.application'
+
+AUTH_USER_MODEL = 'photosii.CustomUser'
+
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'core.settings'
 
@@ -106,6 +131,32 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+LOGIN_URL = '/account/login'
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+
+ACCOUNT_EMAIL_UNIQUE = True
+ACCOUNT_EMAIL_CONFIRMATION_REQUIRED = True
+ACCOUNT_LOGIN_URL = 'photosii:account_login'
+ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = ACCOUNT_LOGIN_URL
+ACCOUNT_PASSWORD_RESET_REDIRECT_URL = ACCOUNT_LOGIN_URL
+ACCOUNT_EMAIL_CONFIRMATION_URL = "photosii:account_confirm_email"
+ACCOUNT_SETTINGS_REDIRECT_URL = 'photosii:account_settings'
+ACCOUNT_PASSWORD_CHANGE_REDIRECT_URL = "photosii:account_password"
+ACCOUNT_LOGIN = '/'
+ACCOUNT_THEME_CONTACT_EMAIL = ""
+
+RECIPIENTS_EMAIL = ['galleryai.help@yandex.ru']  # замените на свою почту
+EMAIL_HOST = 'smtp.yandex.ru'
+EMAIL_PORT = 465
+EMAIL_HOST_USER = "galleryai.help@yandex.ru"
+EMAIL_HOST_PASSWORD = "rlccbxlulhuxrudi"
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
+SERVER_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
 # Internationalization
