@@ -23,15 +23,16 @@ class Photo(models.Model):
 
     id = models.AutoField(primary_key=True)
     image = models.ImageField(upload_to='')
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, blank=True, related_name='photos')
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, blank=True, null=True, related_name='photos')
     description = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=1, choices=statuses, default='n')
     tag = models.ForeignKey('Tag', on_delete=models.CASCADE, related_name='photos', db_index=True, null=True,
                             blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_ai_tag = models.BooleanField(default=False)
 
     def __str__(self):
-        return f'{self.image}'
+        return f'{self.pk} | {self.image}'
 
     def get_absolute_url(self):
         return reverse('photosii:photo_view', kwargs={'id': self.id})

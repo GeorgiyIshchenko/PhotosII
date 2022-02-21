@@ -26,12 +26,13 @@ SECRET_KEY = 'gov7socr(3d$&w35$cnl2qwf*#1g))93lsp%$0q0!0lh@rb-*t'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.0.106', '*']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
 
 SITE_ID = 3
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -52,7 +53,8 @@ REST_FRAMEWORK = {
     # or allow read-only access for unauthenticated users.
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
-    ]
+    ],
+    'DATETIME_FORMAT': "%d.%m.%Y %H:%M",
 }
 
 MIDDLEWARE = [
@@ -96,7 +98,6 @@ TEMPLATE_CONTEXT_PROCESSORS = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 AUTH_USER_MODEL = 'photosii.CustomUser'
-
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 

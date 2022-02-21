@@ -11,7 +11,13 @@ urlpatterns = [
     path('', homepage, name='homepage'),
     path('photo_add', photo_add, name='photo_add'),
     path('<int:id>/', photo_view, name='photo_view'),
-    path('api/photos', PhotoListView.as_view()),
-    path('api/photos/<int:pk>', PhotoView.as_view()),
-    path('api/photos/post', PhotoPost.as_view(),)
+    path('api/<int:user_id>/photos/', PhotoListView.as_view()),
+    path('api/<int:user_id>/photos/<int:pk>/', PhotoView.as_view()),
+    path('api/<int:user_id>/photos/<int:pk>/delete', PhotoDelete.as_view()),
+    path('api/photos/post/', PhotoPost.as_view()),
+    path('api/<int:user_id>/tags/', TagsView.as_view()),
+    path('api/<int:user_id>/tags/<str:tag_name>', TagView.as_view()),
+    path('api/users/', UsersView.as_view()),
+    path('api/<int:user_id>/users/', UserView.as_view()),
+    path('api/users/auth/', UserAuth.as_view()),
 ]

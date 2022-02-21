@@ -15,7 +15,8 @@
                 <legend class="text-center">Вход в аккаунт</legend>
                 {% csrf_token %}
                 <div class="my-1">
-                    {% bootstrap_field form.username %}
+                    <label for="id_username">Адрес электронной почты</label>
+                    <input type="text" name="username" maxlength="30" class="form-control" placeholder="Email" title="" required="" id="id_username">
                 </div>
                 <div class="my-1">
                     {% bootstrap_field form.password %}
@@ -27,13 +28,11 @@
                 <button class="btn" type="submit" style="background-color:#00f5b2;">{% trans "Log in" %}</button>
                 <a href="{% url "account_password_reset" %}" class="btn btn-link text-center w-100">Забыли пароль?</a>
             </form>
-            {% if ACCOUNT_OPEN_SIGNUP %}
-                <p class="login-signup text-center">
+            <p class="login-signup text-center">
                     <small>
                         Еще нет аккаунта? <strong><a href="{% urlnext 'account_signup' %}">Зарегистрироваться</a></strong>
                     </small>
-                </p>
-            {% endif %}
+            </p>
             </div>
         </div>
     </div>
