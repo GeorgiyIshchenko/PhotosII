@@ -2,8 +2,30 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import tensorflow as tf
+import requests
+import shutil
 
-#comment
+
+# comment
+
+def download_photo(URL):
+    filename = URL.split("/")[-1]
+    r = requests.get(URL, stream = True)
+    if r.status_code == 200:
+        r.raw.decode_content = True
+
+        with open(filename, 'wb',) as f:
+            shutil.copyfileobj(r.raw, f)
+
+        print('Image sucessfully Downloaded: ', filename)
+    else:
+        print('Image Couldn\'t be retreived')
+
+
+
+# def F_Test(model):
+#    tf.saved_model(model, "~/PycharmProjects/NeuealNetwork/Models")
+
 def Education():
     _URL = 'https://storage.googleapis.com/mledu-datasets/cats_and_dogs_filtered.zip'
     path_to_zip = tf.keras.utils.get_file('cats_and_dogs.zip', origin=_URL, extract=True)
@@ -159,7 +181,6 @@ def Education():
 
     print(len(model.trainable_variables))
 
-
     fine_tune_epochs = 10
     total_epochs = initial_epochs + fine_tune_epochs
 
@@ -197,7 +218,3 @@ def Education():
 
     loss, accuracy = model.evaluate(test_dataset)
     print('Test accuracy :', accuracy)
-    F_Test(model)
-
-def F_Test(model):
-    tf.saved_model(model, "~/PycharmProjects/NeuealNetwork/Models")
