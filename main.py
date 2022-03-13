@@ -2,18 +2,18 @@ import json
 from Photo import Photo_Schema, Dict2Photo
 from redis import Redis
 import rq
-from Functions import Education, download_photo
+import urllib.request as req
+from Functions import Education, download_photo, downlodad_photo_from_json
 
 queue = rq.Queue('list0', connection=Redis.from_url('redis://'))
 args = []
-job = queue.enqueue(download_photo, "https://cdn.pixabay.com/photo/2020/02/06/09/39/summer-4823612_960_720.jpg", job_timeout=3000)
-
+job = queue.enqueue(Education())
 
 json_string = """[
     {
         "id": 55,
-        "tag": null,
-        "image": "/media/1645439140321.jpg",
+        "tag": "match",
+        "image": "https://www.photostock.com.mx/stock-photo-preview/132507561/1000/inh_33594_320727.jpg",
         "description": "описание",
         "status": "b",
         "created_at": "21.02.2022 13:25",
@@ -22,8 +22,8 @@ json_string = """[
     },
     {
         "id": 54,
-        "tag": null,
-        "image": "/media/1645094634920_2a8nLj8.jpg",
+        "tag": "match",
+        "image": "https://www.photostock.com.mx/stock-photo-preview/132507561/1000/inh_33594_320727.jpg",
         "description": "",
         "status": "n",
         "created_at": "21.02.2022 13:25",
@@ -32,8 +32,8 @@ json_string = """[
     },
     {
         "id": 53,
-        "tag": null,
-        "image": "/media/1645094861693_VZduW3e.jpg",
+        "tag": "match",
+        "image": "https://www.photostock.com.mx/stock-photo-preview/132507561/1000/inh_33594_320727.jpg",
         "description": "",
         "status": "n",
         "created_at": "21.02.2022 13:25",
@@ -42,8 +42,8 @@ json_string = """[
     },
     {
         "id": 52,
-        "tag": null,
-        "image": "/media/1645094870660_LMdd9BR.jpg",
+        "tag": "notmatch",
+        "image": "https://www.photostock.com.mx/stock-photo-preview/132507561/1000/inh_33594_320727.jpg",
         "description": "",
         "status": "n",
         "created_at": "21.02.2022 13:25",
@@ -52,8 +52,8 @@ json_string = """[
     },
     {
         "id": 51,
-        "tag": null,
-        "image": "/media/1645342524209_UcqWCqU.jpg",
+        "tag": "notmatch",
+        "image": "https://www.photostock.com.mx/stock-photo-preview/132507561/1000/inh_33594_320727.jpg",
         "description": "",
         "status": "n",
         "created_at": "21.02.2022 13:25",
@@ -62,8 +62,8 @@ json_string = """[
     },
     {
         "id": 50,
-        "tag": null,
-        "image": "/media/1645376089971_rT2T9S3.jpg",
+        "tag": "notmatch",
+        "image": "https://www.photostock.com.mx/stock-photo-preview/132507561/1000/inh_33594_320727.jpg",
         "description": "",
         "status": "n",
         "created_at": "21.02.2022 13:25",
@@ -72,8 +72,8 @@ json_string = """[
     },
     {
         "id": 49,
-        "tag": null,
-        "image": "/media/1645428439862_udUZbXT.jpg",
+        "tag": "notmatch",
+        "image": "https://www.photostock.com.mx/stock-photo-preview/132507561/1000/inh_33594_320727.jpg",
         "description": "",
         "status": "n",
         "created_at": "21.02.2022 13:25",
@@ -82,12 +82,4 @@ json_string = """[
     }
 ]"""
 
-output = json.loads(json_string)
-photo_list = list()
-for obj in output:
-    photo = Dict2Photo(obj)
-    print(photo.image)
-    photo_list.append(photo)
-
-print(*photo_list)
-
+job = queue.enqueue(downlodad_photo_from_json, json_string = json_string)
