@@ -3,11 +3,11 @@ from Photo import Photo_Schema, Dict2Photo
 from redis import Redis
 import rq
 import urllib.request as req
-from Functions import Education, download_photo, downlodad_photo_from_json
+import os
+from Functions import Education, downlodad_photos_from_json, deleting_old_dataset, set_dataset, model_save, Prediction, \
+    do_photo_array
 
 queue = rq.Queue('list0', connection=Redis.from_url('redis://'))
-args = []
-job = queue.enqueue(Education())
 
 json_string = """[
     {
@@ -81,5 +81,4 @@ json_string = """[
         "user": 13
     }
 ]"""
-
-job = queue.enqueue(downlodad_photo_from_json, json_string = json_string)
+job = queue.enqueue(Prediction, json_string, job_timeout=40000)

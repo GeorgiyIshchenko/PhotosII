@@ -13,39 +13,97 @@ import rq
 queue = rq.Queue('list0', connection=Redis.from_url('redis://'))
 args = []
 
-# comment
 
-def download_photo(URL, name, tag):
-    name = name + ".jpg"
-    if (tag == "match"):
-        name = r"ls /home/Class1/" + name
-        req.urlretrieve(URL, name)
-    if (tag == "notmatch"):
-        name = r"ls /home/Class2/" + name
+def deleting_old_dataset(deleteingdataset):  # removes old dataset
+    if deleteingdataset =='train_dataset':
+        try:
+            path = os.path.join(os.path.dirname((__file__)), r'ls /home')
+            shutil.rmtree(path)
+        except:
+            print("directory is already empty")
+        finally:
+            os.mkdir(r'ls /home')
+            os.mkdir(r'ls /home/Class1')
+            os.mkdir(r'ls /home/Class2')
+    if deleteingdataset =='prediction_dataset':
+        try:
+            path = os.path.join(os.path.dirname((__file__)), r'Onprediction')
+            shutil.rmtree(path)
+        except:
+            print("directory is already empty")
+        finally:
+            os.mkdir(r'Onprediction')
+            os.mkdir(r'Onprediction/Unsorted')
+
+
+def model_preparation():
+    try:
+        model = tf.keras.models.load_model('Models')
+        return model
+    except:
+        print("Model not found")
+        return None
+
+
+def model_save(model):
+    path = os.path.join(os.path.dirname((__file__)), r'Models')
+    shutil.rmtree(path)
+    os.mkdir(r'Models')
+    model.save("Models")
+
+
+def download_photo(URL, name, tag, downloadtype):  # download one image using it's URL, name, tag
+    if downloadtype == 'train_dataset':
+        name = name + ".jpg"
+        if (tag == "match"):
+            name = r"ls /home/Class1/" + name
+            req.urlretrieve(URL, name)
+        if (tag == "notmatch"):
+            name = r"ls /home/Class2/" + name
+            req.urlretrieve(URL, name)
+    if downloadtype == 'prediction_dataset':
+        name = r"Onprediction/Unsorted/" + name + ".jpg"
         req.urlretrieve(URL, name)
 
-def downlodad_photo_from_json(json_string):
+
+def downlodad_photos_from_json(json_string, downloadtype):  # this function adds new dataset
     output = json.loads(json_string)
     photo_list = list()
     for obj in output:
         photo = Dict2Photo(obj)
-        print(photo.image)
         photo_list.append(photo)
-    print(*photo_list)
-    for i in range (len(photo_list)):
-        job = queue.enqueue(download_photo,
-                           URL=photo_list[i].image,
-                           name=str(i), tag=photo_list[i].tag)
+    for i in range(len(photo_list)):
+        download_photo(URL=photo_list[i].image,
+                            name=str(i), tag=photo_list[i].tag, downloadtype=downloadtype)
+
+
+def set_dataset(json_string):  # this function removes old dataset and adds new
+    job = queue.enqueue(deleting_old_dataset, deleteingdataset = 'train_dataset')
+    job = queue.enqueue(downlodad_photos_from_json, json_string, downloadtype='train_dataset')
+
+
+def do_photo_array(json_string):  # do a photo array by json data
+    output = json.loads(json_string)
+    photo_class_list = list()
+    list_of_images = list()
+    for obj in output:
+        photo = Dict2Photo(obj)
+        photo_class_list.append(photo)
+    for i in range(len(photo_class_list)):
+        img = req.urlopen(photo_class_list[i].image).read()
+        list_of_images.append(img)
+    return list_of_images
+
 
 def Education():
     _URL = 'https://storage.googleapis.com/mledu-datasets/cats_and_dogs_filtered.zip'
     path_to_zip = tf.keras.utils.get_file('cats_and_dogs.zip', origin=_URL, extract=True)
     PATH = os.path.join(os.path.dirname(path_to_zip), 'cats_and_dogs_filtered')
-    PATH = r"ls "
 
-    train_dir = os.path.join(PATH, 'home')
-    validation_dir = os.path.join(PATH, 'Test')
-
+    # now our model can understand the difference between dogs and cats, this will be changed when i made prediction function
+    # PATH = r"ls "
+    # train_dir = os.path.join(PATH, 'home')
+    train_dir = os.path.join(PATH, 'train')
     BATCH_SIZE = 32
     IMG_SIZE = (160, 160)
 
@@ -53,11 +111,6 @@ def Education():
                                                                 shuffle=True,
                                                                 batch_size=BATCH_SIZE,
                                                                 image_size=IMG_SIZE)
-
-    validation_dataset = tf.keras.utils.image_dataset_from_directory(validation_dir,
-                                                                     shuffle=True,
-                                                                     batch_size=BATCH_SIZE,
-                                                                     image_size=IMG_SIZE)
 
     class_names = train_dataset.class_names
 
@@ -69,32 +122,14 @@ def Education():
             plt.title(class_names[labels[i]])
             plt.axis("off")
 
-    val_batches = tf.data.experimental.cardinality(validation_dataset)
-    test_dataset = validation_dataset.take(val_batches // 2)
-    validation_dataset = validation_dataset.skip(val_batches // 2)
-
-    print('Number of validation batches: %d' % tf.data.experimental.cardinality(validation_dataset))
-    print('Number of test batches: %d' % tf.data.experimental.cardinality(test_dataset))
-
     AUTOTUNE = tf.data.AUTOTUNE
 
     train_dataset = train_dataset.prefetch(buffer_size=AUTOTUNE)
-    validation_dataset = validation_dataset.prefetch(buffer_size=AUTOTUNE)
-    test_dataset = test_dataset.prefetch(buffer_size=AUTOTUNE)
 
     data_augmentation = tf.keras.Sequential([
         tf.keras.layers.RandomFlip('horizontal'),
         tf.keras.layers.RandomRotation(0.2),
     ])
-
-    for image, _ in train_dataset.take(1):
-        plt.figure(figsize=(10, 10))
-        first_image = image[0]
-        for i in range(9):
-            ax = plt.subplot(3, 3, i + 1)
-            augmented_image = data_augmentation(tf.expand_dims(first_image, 0))
-            plt.imshow(augmented_image[0] / 255)
-            plt.axis('off')
 
     preprocess_input = tf.keras.applications.mobilenet_v2.preprocess_input
     rescale = tf.keras.layers.Rescaling(1. / 127.5, offset=-1)
@@ -136,15 +171,53 @@ def Education():
 
     model.summary()
 
-    initial_epochs = 30
-
-    loss0, accuracy0 = model.evaluate(validation_dataset)
-
-    print("initial loss: {:.2f}".format(loss0))
-    print("initial accuracy: {:.2f}".format(accuracy0))
+    initial_epochs = 10
 
     history = model.fit(train_dataset,
-                        epochs=initial_epochs,
-                        validation_data=validation_dataset)
+                        epochs=initial_epochs)
 
-    model.save("Models")
+    base_model.trainable = True
+
+    fine_tune_at = 100
+
+    for layer in base_model.layers[:fine_tune_at]:
+        layer.traindable = False
+
+    model.summary()
+
+    fine_tune_epochs = 10
+
+    total_epochs = initial_epochs + fine_tune_epochs
+
+    history_fine = model.fit(train_dataset, epochs=total_epochs, initial_epoch=history.epoch[-1])
+
+    queue.enqueue(model_save, model)
+
+def join_prediction_dataset():
+    prediction_dir = os.path.join('Onprediction')
+    BATCH_SIZE = 32
+    IMG_SIZE = (160, 160)
+    prediction_dataset = tf.keras.utils.image_dataset_from_directory(prediction_dir,
+                                                                     shuffle=True,
+                                                                     batch_size=BATCH_SIZE,
+                                                                     image_size=IMG_SIZE)
+    return prediction_dataset
+
+def do_prediction_dataset(json_string):
+    deleting_old_dataset(deleteingdataset = 'prediction_dataset')
+    downlodad_photos_from_json(json_string, downloadtype='prediction_dataset')
+    return join_prediction_dataset()
+
+def Prediction(json_string):
+    model = model_preparation()
+    prediction_dataset = do_prediction_dataset(json_string)
+    AUTOTUNE = tf.data.AUTOTUNE
+
+    prediction_dataset = prediction_dataset.prefetch(buffer_size=AUTOTUNE)
+
+    image_batch, label_batch = prediction_dataset.as_numpy_iterator().next()
+    predictions = model.predict_on_batch(image_batch).flatten()
+
+    predictions = tf.nn.sigmoid(predictions)
+    predictions = tf.where(predictions < 0.5, 0, 1)
+    print('predictions:\n', predictions.numpy())
