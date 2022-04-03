@@ -15,7 +15,7 @@ args = []
 
 
 def deleting_old_dataset(deleteingdataset):  # removes old dataset
-    if deleteingdataset =='train_dataset':
+    if deleteingdataset == 'train_dataset':
         try:
             path = os.path.join(os.path.dirname((__file__)), r'ls /home')
             shutil.rmtree(path)
@@ -25,7 +25,7 @@ def deleting_old_dataset(deleteingdataset):  # removes old dataset
             os.mkdir(r'ls /home')
             os.mkdir(r'ls /home/Class1')
             os.mkdir(r'ls /home/Class2')
-    if deleteingdataset =='prediction_dataset':
+    if deleteingdataset == 'prediction_dataset':
         try:
             path = os.path.join(os.path.dirname((__file__)), r'Onprediction')
             shutil.rmtree(path)
@@ -74,12 +74,12 @@ def downlodad_photos_from_json(json_string, downloadtype):  # this function adds
         photo_list.append(photo)
     for i in range(len(photo_list)):
         download_photo(URL=photo_list[i].image,
-                            name=str(i), tag=photo_list[i].tag, downloadtype=downloadtype)
+                       name=str(i), tag=photo_list[i].tag, downloadtype=downloadtype)
 
 
 def set_dataset(json_string):  # this function removes old dataset and adds new
-    job = queue.enqueue(deleting_old_dataset, deleteingdataset = 'train_dataset')
-    job = queue.enqueue(downlodad_photos_from_json, json_string, downloadtype='train_dataset')
+    deleting_old_dataset(deleteingdataset='train_dataset')
+    downlodad_photos_from_json(json_string, downloadtype='train_dataset')
 
 
 def do_photo_array(json_string):  # do a photo array by json data
@@ -105,7 +105,7 @@ def Education():
     # train_dir = os.path.join(PATH, 'home')
     train_dir = os.path.join(PATH, 'train')
     BATCH_SIZE = 32
-    IMG_SIZE = (160, 160)
+    IMG_SIZE = (512, 512)
 
     train_dataset = tf.keras.utils.image_dataset_from_directory(train_dir,
                                                                 shuffle=True,
@@ -155,7 +155,7 @@ def Education():
     prediction_batch = prediction_layer(feature_batch_average)
     print(prediction_batch.shape)
 
-    inputs = tf.keras.Input(shape=(160, 160, 3))
+    inputs = tf.keras.Input(shape=(512, 512, 3))
     x = data_augmentation(inputs)
     x = preprocess_input(x)
     x = base_model(x, training=False)
@@ -181,7 +181,7 @@ def Education():
     fine_tune_at = 100
 
     for layer in base_model.layers[:fine_tune_at]:
-        layer.traindable = False
+        layer.trainable = False
 
     model.summary()
 
@@ -193,6 +193,55 @@ def Education():
 
     queue.enqueue(model_save, model)
 
+
+def _parce_function(filename, label):
+    path = "Media/"
+    filename = path + filename
+    image_string = tf.io.read_file(filename)
+    image_decoded = tf.image.decode_jpeg(image_string, channels=3)
+    image = tf.cast(image_decoded, tf.float32)
+    image = tf.image.resize(image, [512, 512])
+    return image, label
+
+
+def dataset_by_filenames(json_string):
+    output = json.loads(json_string)
+    photo_list = list()
+
+    filenames = list()
+    labels = list()
+
+    for obj in output:
+        photo = Dict2Photo(obj)
+        photo_list.append(photo)
+
+    for photo in photo_list:
+        filenames.append(photo.image)
+        if photo.tag == "match":
+            labels.append(1)
+        elif photo.tag == "notmatch":
+            labels.append(0)
+        else:
+            labels.append(-1)
+
+    print(filenames)
+    print(labels)
+
+    filenames = tf.constant(filenames)
+    labels = tf.constant(labels)
+
+    print(filenames)
+    print(labels)
+
+    dataset = tf.data.Dataset.from_tensor_slices((filenames, labels))
+
+    dataset = dataset.map(_parce_function)
+    dataset = dataset.batch(2)
+
+
+    return dataset
+
+
 def join_prediction_dataset():
     prediction_dir = os.path.join('Onprediction')
     BATCH_SIZE = 32
@@ -203,14 +252,16 @@ def join_prediction_dataset():
                                                                      image_size=IMG_SIZE)
     return prediction_dataset
 
+
 def do_prediction_dataset(json_string):
-    deleting_old_dataset(deleteingdataset = 'prediction_dataset')
+    deleting_old_dataset(deleteingdataset='prediction_dataset')
     downlodad_photos_from_json(json_string, downloadtype='prediction_dataset')
     return join_prediction_dataset()
 
+
 def Prediction(json_string):
     model = model_preparation()
-    prediction_dataset = do_prediction_dataset(json_string)
+    prediction_dataset = dataset_by_filenames(json_string)
     AUTOTUNE = tf.data.AUTOTUNE
 
     prediction_dataset = prediction_dataset.prefetch(buffer_size=AUTOTUNE)
@@ -220,4 +271,6 @@ def Prediction(json_string):
 
     predictions = tf.nn.sigmoid(predictions)
     predictions = tf.where(predictions < 0.5, 0, 1)
-    print('predictions:\n', predictions.numpy())
+
+    # print('predictions:\n', predictions.numpy())
+    return predictions.numpy()
