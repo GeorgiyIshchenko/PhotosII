@@ -105,7 +105,7 @@ def Education():
     # train_dir = os.path.join(PATH, 'home')
     train_dir = os.path.join(PATH, 'train')
     BATCH_SIZE = 32
-    IMG_SIZE = (512, 512)
+    IMG_SIZE = (160, 160)
 
     train_dataset = tf.keras.utils.image_dataset_from_directory(train_dir,
                                                                 shuffle=True,
@@ -155,7 +155,7 @@ def Education():
     prediction_batch = prediction_layer(feature_batch_average)
     print(prediction_batch.shape)
 
-    inputs = tf.keras.Input(shape=(512, 512, 3))
+    inputs = tf.keras.Input(shape=(160, 160, 3))
     x = data_augmentation(inputs)
     x = preprocess_input(x)
     x = base_model(x, training=False)
@@ -200,7 +200,7 @@ def _parce_function(filename, label):
     image_string = tf.io.read_file(filename)
     image_decoded = tf.image.decode_jpeg(image_string, channels=3)
     image = tf.cast(image_decoded, tf.float32)
-    image = tf.image.resize(image, [512, 512])
+    image = tf.image.resize(image, [160, 160], preserve_aspect_ratio=False)
     return image, label
 
 
@@ -224,6 +224,8 @@ def dataset_by_filenames(json_string):
         else:
             labels.append(-1)
 
+    total_amount = len(labels)
+
     print(filenames)
     print(labels)
 
@@ -236,7 +238,10 @@ def dataset_by_filenames(json_string):
     dataset = tf.data.Dataset.from_tensor_slices((filenames, labels))
 
     dataset = dataset.map(_parce_function)
-    dataset = dataset.batch(2)
+    dataset = dataset.batch(total_amount)
+
+    for element in dataset:
+        print(element)
 
 
     return dataset
