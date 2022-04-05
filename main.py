@@ -14,7 +14,7 @@ queue = rq.Queue('list0', connection=Redis.from_url('redis://'))
 json_string = """[
     {
         "id": 55,
-        "tag": "match",
+        "tag": "notmatch",
         "image": "0.jpg",
         "description": "описание",
         "status": "b",
@@ -33,9 +33,13 @@ json_string = """[
         "user": 13
     }
 ]"""
-job = queue.enqueue(Prediction, json_string, job_timeout=40000)
+
+print(Prediction(json_string))
+'''
+job = queue.enqueue(Education, json_string, job_timeout=40000)
 while job.is_finished==False:
     job.refresh()
     time.sleep(1)
 
 print(job.result)
+'''

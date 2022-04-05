@@ -95,32 +95,13 @@ def do_photo_array(json_string):  # do a photo array by json data
     return list_of_images
 
 
-def Education():
-    _URL = 'https://storage.googleapis.com/mledu-datasets/cats_and_dogs_filtered.zip'
-    path_to_zip = tf.keras.utils.get_file('cats_and_dogs.zip', origin=_URL, extract=True)
-    PATH = os.path.join(os.path.dirname(path_to_zip), 'cats_and_dogs_filtered')
-
-    # now our model can understand the difference between dogs and cats, this will be changed when i made prediction function
-    # PATH = r"ls "
-    # train_dir = os.path.join(PATH, 'home')
-    train_dir = os.path.join(PATH, 'train')
+def Education(json_string):
     BATCH_SIZE = 32
     IMG_SIZE = (160, 160)
 
-    train_dataset = tf.keras.utils.image_dataset_from_directory(train_dir,
-                                                                shuffle=True,
-                                                                batch_size=BATCH_SIZE,
-                                                                image_size=IMG_SIZE)
+    train_dataset = dataset_by_filenames(json_string)
 
-    class_names = train_dataset.class_names
-
-    plt.figure(figsize=(10, 10))
-    for images, labels in train_dataset.take(1):
-        for i in range(9):
-            ax = plt.subplot(3, 3, i + 1)
-            plt.imshow(images[i].numpy().astype("uint8"))
-            plt.title(class_names[labels[i]])
-            plt.axis("off")
+    #class_names = train_dataset.class_names
 
     AUTOTUNE = tf.data.AUTOTUNE
 
@@ -226,22 +207,18 @@ def dataset_by_filenames(json_string):
 
     total_amount = len(labels)
 
-    print(filenames)
-    print(labels)
+
 
     filenames = tf.constant(filenames)
     labels = tf.constant(labels)
 
-    print(filenames)
-    print(labels)
+
 
     dataset = tf.data.Dataset.from_tensor_slices((filenames, labels))
 
     dataset = dataset.map(_parce_function)
     dataset = dataset.batch(total_amount)
 
-    for element in dataset:
-        print(element)
 
 
     return dataset
